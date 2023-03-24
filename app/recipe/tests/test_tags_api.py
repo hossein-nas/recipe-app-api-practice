@@ -1,7 +1,7 @@
 from django.contrib.auth import get_user_model
 from django.test import TestCase
-from django.urls import reverse
 from rest_framework import status
+from rest_framework.reverse import reverse
 from rest_framework.test import APIClient
 
 from core.models import Tag
@@ -10,6 +10,10 @@ from recipe.serializers import TagSerializer
 User = get_user_model()
 
 TAGS_URL = reverse('recipe:tag-list')
+
+
+def TAGS_RETRIEVE_URL(id=None):
+    return reverse('recipe:tag-detail', kwargs={'pk': id})
 
 
 class PublicAPITests(TestCase):
@@ -85,3 +89,19 @@ class PrivateTagsAPITests(TestCase):
         res = self.client.post(TAGS_URL, payload)
 
         self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_cannot_delete_other_users_tags(self):
+        """Test that any user cannot delete other user's tag"""
+        new_user = User.objects.create_user('test@testdev.ir', 'test')
+        new_user_tag = Tag.objects.create(name='new_user_tag', user=new_user)
+        user_tag = Tag.objects.create(name='new_tag', user=self.user)
+
+        self.assertEqual(len(Tag.objects.all()), 2)
+
+        res = self.client.delete(TAGS_RETRIEVE_URL(new_user_tag.id))
+        self.assertEqual(res.status_code, status.HTTP_404_NOT_FOUND)
+
+        res = self.client.delete(TAGS_RETRIEVE_URL(user_tag.id))
+        self.assertEqual(res.status_code, status.HTTP_204_NO_CONTENT)
+
+        self.assertEqual(len(Tag.objects.all()), 1)
