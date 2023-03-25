@@ -101,3 +101,21 @@ class PrivateIngredientsAPITest(TestCase):
 
         ingredient.refresh_from_db()
         self.assertEqual(ingredient.name, 'Salty')
+
+    def test_cannot_update_other_users_ingredients(self):
+        """Test that cannot update other user's ingredients"""
+        new_user = User.objects.create_user('test@newuser.ir', 'testpass')
+
+        ingredient = Ingredient.objects.create(
+            name='Salt',
+            user=new_user,
+        )
+
+        res = self.client.patch(
+            reverse('recipe:ingredient-detail', args=[ingredient.pk]),
+            {'name': 'Salty'}
+        )
+
+        ingredient.refresh_from_db()
+        self.assertEquals(res.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(ingredient.name, 'Salt')
