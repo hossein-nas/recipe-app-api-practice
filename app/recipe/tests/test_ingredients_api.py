@@ -66,5 +66,38 @@ class PrivateIngredientsAPITest(TestCase):
         )
 
         res = self.client.get(INGREDIENTS_URL)
-
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
         self.assertEqual(len(res.data), 1)
+
+    def test_create_ingredient_successful(self):
+        """Test create a new ingredient"""
+        payload = {
+            'name': 'Salt',
+        }
+
+        res = self.client.post(INGREDIENTS_URL, payload)
+
+        self.assertEqual(res.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(res.data['name'], payload['name'])
+        self.assertEqual(Ingredient.objects.count(), 1)
+
+    def test_create_ingredient_invalid(self):
+        """Test creating invalid ingredient fails"""
+        payload = {'name': ''}
+        res = self.client.post(INGREDIENTS_URL, payload)
+
+        self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_partial_update_ingredient_item(self):
+        """Test that can update ingredient name."""
+        ingredient = Ingredient.objects.create(name='Salt', user=self.user)
+
+        self.client.patch(
+            reverse('recipe:ingredient-detail', args=[ingredient.pk]),
+            {
+                'name': 'Salty'
+            }
+        )
+
+        ingredient.refresh_from_db()
+        self.assertEqual(ingredient.name, 'Salty')
