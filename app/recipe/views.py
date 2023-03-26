@@ -6,20 +6,22 @@ from core.models import Tag, Ingredient
 from recipe.serializers import TagSerializer, IngredientSerializer
 
 
-class TagViewSet(viewsets.GenericViewSet,
-                 mixins.DestroyModelMixin,
-                 mixins.CreateModelMixin,
-                 mixins.ListModelMixin,
-                 ):
-    """Manage Tags in the database"""
+class BaseRecipeAttrViewSet(
+    viewsets.GenericViewSet,
+    mixins.ListModelMixin,
+    mixins.CreateModelMixin,
+    mixins.DestroyModelMixin,
+    mixins.UpdateModelMixin,
+    mixins.RetrieveModelMixin,
+):
+    """Handles base class to for handling recipe attributes"""
 
     authentication_classes = (TokenAuthentication,)
     permission_classes = (IsAuthenticated,)
-    queryset = Tag.objects.all()
     serializer_class = TagSerializer
 
     def perform_create(self, serializer):
-        """Create a new tag"""
+        """Create a new obj"""
         serializer.save(user=self.request.user)
 
     def get_queryset(self):
@@ -27,22 +29,13 @@ class TagViewSet(viewsets.GenericViewSet,
         return self.queryset.filter(user=self.request.user).order_by('-name')
 
 
-class IngredientViewSet(
-    viewsets.GenericViewSet,
-    mixins.ListModelMixin,
-    mixins.CreateModelMixin,
-    mixins.UpdateModelMixin,
-    mixins.RetrieveModelMixin,
-):
+class TagViewSet(BaseRecipeAttrViewSet):
+    """Manage Tags in the database"""
+    queryset = Tag.objects.all()
+    serializer_class = TagSerializer
+
+
+class IngredientViewSet(BaseRecipeAttrViewSet):
     """Manage ingredients in the database"""
     queryset = Ingredient.objects.all()
     serializer_class = IngredientSerializer
-    authentication_classes = (TokenAuthentication,)
-    permission_classes = (IsAuthenticated,)
-
-    def get_queryset(self):
-        return self.queryset.filter(user=self.request.user).order_by('-name')
-
-    def perform_create(self, serializer):
-        """Create a new ingredient."""
-        serializer.save(user=self.request.user)
