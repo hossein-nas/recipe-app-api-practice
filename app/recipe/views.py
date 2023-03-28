@@ -40,15 +40,19 @@ class IngredientViewSet(BaseRecipeAttrViewSet):
     serializer_class = IngredientSerializer
 
 
-class RecipeApiViewSet(viewsets.GenericViewSet, mixins.ListModelMixin,
-                       mixins.RetrieveModelMixin):
+class RecipeApiViewSet(
+    viewsets.GenericViewSet,
+    mixins.ListModelMixin,
+    mixins.RetrieveModelMixin,
+    mixins.CreateModelMixin
+):
     queryset = Recipe.objects.all()
     authentication_classes = (TokenAuthentication,)
     permission_classes = (IsAuthenticated,)
     serializer_class = RecipeSerializer
 
     def get_queryset(self):
-        return self.queryset.filter(user=self.request.user).order_by('-title')
+        return self.queryset.filter(user=self.request.user).order_by('-id')
 
     def get_serializer_class(self):
         if self.action == 'retrieve':
