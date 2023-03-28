@@ -110,7 +110,6 @@ class PrivateRecipeAPITest(TestCase):
 
     def test_create_recipe_with_tags(self):
         """Test creating a recipe with tags"""
-
         tag1 = sample_tag(user=self.user, name="Vegan")
         tag2 = sample_tag(user=self.user, name="Dessert")
 
@@ -134,7 +133,6 @@ class PrivateRecipeAPITest(TestCase):
 
     def test_create_recipe_with_ingredients(self):
         """Test creating a recipe with Ingredients"""
-
         ingredient1 = sample_ingredient(user=self.user, name="Prawns")
         ingredient2 = sample_ingredient(user=self.user, name="Ginger")
 
@@ -171,3 +169,41 @@ class PrivateRecipeAPITest(TestCase):
 
         self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertFalse(exists)
+
+    def test_partial_update_recipe(self):
+        """Test updating a recipe with PATCH"""
+        recipe = sample_recipe(user=self.user)
+        old_tag = sample_tag(user=self.user, name="OldTag")
+        new_tag = sample_tag(user=self.user, name="NewTag")
+        recipe.tags.add(old_tag)
+
+        res = self.client.patch(recipe_detail(recipe.id), {
+            'title': 'Chicken tikka',
+            'tags': [new_tag.id]
+        })
+
+        recipe.refresh_from_db()
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertIn(new_tag, recipe.tags.all())
+        self.assertEqual(res.data['title'], 'Chicken tikka')
+
+    def test_full_update_recipe(self):
+        """Test full updating a recipe with PUT"""
+        recipe = sample_recipe(user=self.user)
+        old_tag = sample_tag(user=self.user, name="OldTag")
+        new_tag = sample_tag(user=self.user, name="NewTag")
+        recipe.tags.add(old_tag)
+
+        res = self.client.put(recipe_detail(recipe.id), {
+            'title': 'Chicken tikka',
+            'tags': [new_tag.id],
+            'time_minutes': 111,
+            'price': 111.00
+        })
+
+        recipe.refresh_from_db()
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertIn(new_tag, recipe.tags.all())
+        self.assertEqual(getattr(recipe, 'title'), 'Chicken tikka')
+        self.assertEqual(getattr(recipe, 'price'), 111.00)
+        self.assertEqual(getattr(recipe, 'time_minutes'), 111)

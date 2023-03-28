@@ -44,7 +44,8 @@ class RecipeApiViewSet(
     viewsets.GenericViewSet,
     mixins.ListModelMixin,
     mixins.RetrieveModelMixin,
-    mixins.CreateModelMixin
+    mixins.CreateModelMixin,
+    mixins.UpdateModelMixin
 ):
     queryset = Recipe.objects.all()
     authentication_classes = (TokenAuthentication,)
